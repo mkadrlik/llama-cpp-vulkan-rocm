@@ -1,10 +1,8 @@
-# llama-cpp-nvidia-tq
+# llama-cpp-vulkan-tq
 
-llama.cpp with **TurboQuant** KV cache compression, built for NVIDIA CUDA GPUs.
+llama.cpp with **TurboQuant** KV cache compression, built for Vulkan GPUs (AMD, NVIDIA, Intel).
 
-[![Build Status](http://192.168.50.11:3042/api/repos/mkadrlik/llama-cpp-nvidia-tq/actions/runs?branch=main)](http://192.168.50.11:3042/mkadrlik/llama-cpp-nvidia-tq/actions)
-
-> **\u26a0\ufe0f UNTESTED:** This image has **NOT** been tested on NVIDIA hardware. It was created as a byproduct of the [ROCm implementation](https://github.com/mkadrlik/llama-cpp-rocm-tq). If you find issues, please [create an issue](https://github.com/mkadrlik/llama-cpp-nvidia-tq/issues) and we will address it promptly.
+> **⚠️ UNTESTED:** This image has **NOT** been tested on any Vulkan hardware. It was created as a byproduct of the [ROCm implementation](https://github.com/mkadrlik/llama-cpp-rocm-tq). If you find issues, please [create an issue](https://github.com/mkadrlik/llama-cpp-vulkan-tq/issues) and we will address it promptly.
 
 ## What is TurboQuant?
 
@@ -22,10 +20,11 @@ TurboQuant compresses the KV cache using Walsh-Hadamard Transform (WHT) rotation
 
 ```bash
 # Using pre-built image from local registry
-docker run --rm --gpus all \
+docker run --rm \
+  --device /dev/dri \
   -p 8080:8080 \
   -v /path/to/model.gguf:/model.gguf:ro \
-  192.168.50.11:5000/mkadrlik/llama-cpp-nvidia-tq:latest \
+  192.168.50.11:5000/mkadrlik/llama-cpp-vulkan-tq:latest \
   --model /model.gguf -ctk turbo3 -ctv turbo3 -ngl 99
 ```
 
@@ -40,7 +39,7 @@ docker compose up -d
 ## Building from Source
 
 ```bash
-docker build -t llama-cpp-nvidia-tq .
+docker build -t llama-cpp-vulkan-tq .
 ```
 
 ## Attribution & Acknowledgements
@@ -50,19 +49,19 @@ This project builds on the excellent work of several open source contributors:
 - **[TheTom/llama-cpp-turboquant](https://github.com/TheTom/llama-cpp-turboquant)** — The canonical TurboQuant fork of llama.cpp. This Docker image uses the `feature/turboquant-kv-cache` branch. All credit for TurboQuant implementation goes to TheTom.
 - **[ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp)** — The upstream llama.cpp project by @ggerganov and contributors.
 - **[TurboQuant Paper](https://arxiv.org/abs/2504.19874)** — The research paper describing the WHT + PolarQuant KV cache compression technique.
-- **NVIDIA CUDA** — NVIDIA's parallel computing platform used in this build.
+- **Vulkan** — Cross-platform GPU API enabling support for AMD, NVIDIA, and Intel graphics.
 
 ## Build Process
 
 This Docker image is built using a multi-stage Dockerfile:
 
-1. **Builder stage** (`nvidia/cuda:12.2.0-devel-ubuntu22.04`):
-   - Installs build dependencies (cmake, git, build-essential)
+1. **Builder stage** (`ubuntu:22.04` + `vulkan-sdk`):
+   - Installs build dependencies (cmake, git, build-essential, vulkan-sdk)
    - Clones TheTom's TurboQuant fork from `feature/turboquant-kv-cache` branch
-   - Configures CMake with `GGML_CUDA=ON`
-   - Builds with CUDA toolkit
+   - Configures CMake with `GGML_VULKAN=ON`
+   - Builds with Vulkan SDK
 
-2. **Runtime stage** (`nvidia/cuda:12.2.0-runtime-ubuntu22.04`):
+2. **Runtime stage** (`ubuntu:22.04` + `libvulkan1`):
    - Copies built binaries (llama-server, llama-quantize)
    - Copies all shared libraries (libggml*, libllama*)
    - Sets default CMD to serve with turbo3 KV cache compression
@@ -71,7 +70,7 @@ This Docker image is built using a multi-stage Dockerfile:
 
 See [benchmarks/README.md](benchmarks/README.md) for benchmark results.
 
-> **Note:** Benchmarks were run on AMD ROCm hardware (3x RX 7900 XTX). Results on NVIDIA CUDA hardware may differ. The relative improvements between cache types should be consistent, but absolute numbers will vary.
+> **Note:** Benchmarks were run on AMD ROCm hardware (3x RX 7900 XTX). Results on Vulkan hardware may differ. The relative improvements between cache types should be consistent, but absolute numbers will vary.
 
 ## License
 

@@ -1,15 +1,10 @@
 services:
   llama-server:
     image: ${IMAGE_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-    container_name: llama-cpp-nvidia-tq
+    container_name: llama-cpp-vulkan-tq
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    devices:
+      - /dev/dri:/dev/dri
     ports:
       - "${SERVER_PORT}:8080"
     volumes:
