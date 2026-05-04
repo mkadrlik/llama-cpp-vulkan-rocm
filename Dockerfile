@@ -1,9 +1,8 @@
 ###############################################################################
 # llama-cpp-nvidia-tq
-# CUDA build of llama.cpp with TurboQuant KV cache compression and
-# Split Mode Graph (multi-GPU tensor parallelism).
+# CUDA build of llama.cpp with TurboQuant KV cache compression.
 #
-# Source: domvox/llama.cpp-turboquant-hip (feature/turboquant-hip-port-clean)
+# Source: TheTom/llama-cpp-turboquant (feature/turboquant-kv-cache)
 ###############################################################################
 
 FROM nvidia/cuda:12.2.0-devel-ubuntu22.04 AS builder
@@ -15,9 +14,9 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone TurboQuant fork (not vanilla llama.cpp)
-RUN git clone --branch feature/turboquant-hip-port-clean --depth 1 \
-    https://github.com/domvox/llama.cpp-turboquant-hip.git /opt/llama.cpp
+# Clone TurboQuant fork (TheTom — canonical, actively maintained)
+RUN git clone --branch feature/turboquant-kv-cache --depth 1 \
+    https://github.com/TheTom/llama-cpp-turboquant.git /opt/llama.cpp
 WORKDIR /opt/llama.cpp
 
 # Build with CUDA and TurboQuant support
@@ -29,10 +28,14 @@ RUN cmake --build build --config Release -j$(nproc)
 ###############################################################################
 FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
 
-# Copy built binaries
+# Copy built binaries + shared libs
 COPY --from=builder /opt/llama.cpp/build/bin/llama-server /usr/local/bin/
 COPY --from=builder /opt/llama.cpp/build/bin/llama-quantize /usr/local/bin/
+COPY --from=builder /opt/llama.cpp/build/bin/libggml*.so* /usr/local/lib/
+COPY --from=builder /opt/llama.cpp/build/bin/libllama.so* /usr/local/lib/
 
-# Default: serve with TurboQuant and Split Mode Graph
+ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH:-}
+
+# Default: serve with TurboQuant 3-bit KV cache (recommended)
 ENTRYPOINT ["llama-server"]
-CMD ["--host", "0.0.0.0", "--port", "8080", "-sm", "graph", "-ctk", "turbo", "-ctv", "turbo"]
+CMD ["--host", "0.0.0.0", "--port", "8080", "-ctk", "turbo3", "-ctv", "turbo3"]
