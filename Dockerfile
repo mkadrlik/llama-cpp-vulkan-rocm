@@ -7,12 +7,12 @@
 
 FROM ubuntu:22.04 AS builder
 
-# Build dependencies + Vulkan SDK
+# Build dependencies + Vulkan headers
 RUN apt-get update && apt-get install -y \
     cmake \
     git \
     build-essential \
-    vulkan-sdk \
+    libvulkan-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone TurboQuant fork (TheTom — canonical, actively maintained)
