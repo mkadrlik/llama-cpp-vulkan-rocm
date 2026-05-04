@@ -7,13 +7,24 @@
 
 FROM ubuntu:22.04 AS builder
 
-# Build dependencies + Vulkan headers
+# Build dependencies
 RUN apt-get update && apt-get install -y \
     cmake \
     git \
     build-essential \
-    libvulkan-dev \
+    wget \
+    ca-certificates \
+    xz-utils \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Vulkan SDK from LunarG (1.4.309.0)
+RUN wget -qO /tmp/vulkansdk.tar.xz "https://sdk.lunarg.com/sdk/download/1.4.309.0/linux/vulkansdk-linux-x86_64-1.4.309.0.tar.xz" && \
+    mkdir -p /opt/vulkan && \
+    tar xf /tmp/vulkansdk.tar.xz -C /opt/vulkan && \
+    rm /tmp/vulkansdk.tar.xz
+
+ENV VULKAN_SDK=/opt/vulkan/1.4.309.0/x86_64
+ENV PATH=/opt/vulkan/1.4.309.0/x86_64/bin:${PATH}
 
 # Clone TurboQuant fork (TheTom — canonical, actively maintained)
 RUN git clone --branch feature/turboquant-kv-cache --depth 1 \
