@@ -24,7 +24,7 @@ docker run --rm \
   --device /dev/dri \
   -p 8080:8080 \
   -v /path/to/model.gguf:/model.gguf:ro \
-  192.168.50.11:5000/mkadrlik/llama-cpp-vulkan-tq:latest \
+  ghcr.io/mkadrlik/llama-cpp-vulkan-tq:latest \
   --model /model.gguf -ctk turbo3 -ctv turbo3 -ngl 99
 ```
 
