@@ -42,14 +42,15 @@ FROM ubuntu:22.04
 
 # Vulkan runtime
 RUN apt-get update && apt-get install -y \
-    libvulkan1 \
+    libvulkan1 libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy built binaries + shared libs
 COPY --from=builder /opt/llama.cpp/build/bin/llama-server /usr/local/bin/
 COPY --from=builder /opt/llama.cpp/build/bin/llama-quantize /usr/local/bin/
 COPY --from=builder /opt/llama.cpp/build/bin/libggml*.so* /usr/local/lib/
-COPY --from=builder /opt/llama.cpp/build/bin/libllama.so* /usr/local/lib/
+COPY --from=builder /opt/llama.cpp/build/bin/libllama*.so* /usr/local/lib/
+COPY --from=builder /opt/llama.cpp/build/bin/libmtmd*.so* /usr/local/lib/
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
 
