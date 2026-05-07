@@ -3,9 +3,11 @@
 # Vulkan build of llama.cpp with TurboQuant KV cache compression.
 #
 # Source: TheTom/llama-cpp-turboquant (feature/turboquant-kv-cache)
+# Base: rocm/dev-ubuntu-24.04 (same as ROCm build for consistent toolchain)
 ###############################################################################
 
-FROM ubuntu:22.04 AS builder
+# Use -complete variant which includes full dev toolchain (~6.9 GB)
+FROM rocm/dev-ubuntu-24.04:7.2.3-complete AS builder
 
 # Build dependencies
 RUN apt-get update && apt-get install -y \
@@ -44,14 +46,14 @@ RUN cmake -B build \
 ###############################################################################
 # Runtime image
 ###############################################################################
-FROM ubuntu:22.04
+FROM rocm/dev-ubuntu-24.04:7.2.3
 
-# Vulkan runtime + BLAS runtime
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     libvulkan1 libgomp1 libopenblas0-pthread \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy built binaries + shared libs
+# Copy built binaries + ALL shared libs (llama-server dynamically links to all of them)
 COPY --from=builder /opt/llama.cpp/build/bin/llama-server /usr/local/bin/
 COPY --from=builder /opt/llama.cpp/build/bin/llama-quantize /usr/local/bin/
 COPY --from=builder /opt/llama.cpp/build/bin/llama-bench /usr/local/bin/
@@ -59,6 +61,9 @@ COPY --from=builder /opt/llama.cpp/build/bin/llama-perplexity /usr/local/bin/
 COPY --from=builder /opt/llama.cpp/build/bin/libggml*.so* /usr/local/lib/
 COPY --from=builder /opt/llama.cpp/build/bin/libllama*.so* /usr/local/lib/
 COPY --from=builder /opt/llama.cpp/build/bin/libmtmd*.so* /usr/local/lib/
+
+# Copy ROCm runtime libraries (hipblas, rocblas, etc.)
+COPY --from=builder /opt/rocm/lib/ /opt/rocm/lib/
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
 
