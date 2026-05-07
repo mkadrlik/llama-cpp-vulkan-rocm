@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y \
     wget \
     ca-certificates \
     xz-utils \
+    pkg-config \
+    libopenblas-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Vulkan SDK from LunarG (1.4.309.0)
@@ -31,23 +33,29 @@ RUN git clone --branch feature/turboquant-kv-cache --depth 1 \
     https://github.com/TheTom/llama-cpp-turboquant.git /opt/llama.cpp
 WORKDIR /opt/llama.cpp
 
-# Build with Vulkan and TurboQuant support
-RUN cmake -B build -DGGML_VULKAN=ON
-RUN cmake --build build --config Release -j$(nproc)
+# Build with Vulkan + TurboQuant + Release optimizations + BLAS
+RUN cmake -B build \
+    -DGGML_VULKAN=ON \
+    -DGGML_BLAS=ON \
+    -DGGML_BLAS_VENDOR=OpenBLAS \
+    -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build build --config Release -j$(nproc)
 
 ###############################################################################
 # Runtime image
 ###############################################################################
 FROM ubuntu:22.04
 
-# Vulkan runtime
+# Vulkan runtime + BLAS runtime
 RUN apt-get update && apt-get install -y \
-    libvulkan1 libgomp1 \
+    libvulkan1 libgomp1 libopenblas0-pthread \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy built binaries + shared libs
 COPY --from=builder /opt/llama.cpp/build/bin/llama-server /usr/local/bin/
 COPY --from=builder /opt/llama.cpp/build/bin/llama-quantize /usr/local/bin/
+COPY --from=builder /opt/llama.cpp/build/bin/llama-bench /usr/local/bin/
+COPY --from=builder /opt/llama.cpp/build/bin/llama-perplexity /usr/local/bin/
 COPY --from=builder /opt/llama.cpp/build/bin/libggml*.so* /usr/local/lib/
 COPY --from=builder /opt/llama.cpp/build/bin/libllama*.so* /usr/local/lib/
 COPY --from=builder /opt/llama.cpp/build/bin/libmtmd*.so* /usr/local/lib/
