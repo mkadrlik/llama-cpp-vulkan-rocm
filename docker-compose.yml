@@ -1,3 +1,10 @@
+###############################################################################
+# llama-cpp-vulkan-tq — Docker Compose
+#
+# Vulkan backend for fast inference. Does NOT support TurboQuant.
+# Flash Attention (-fa on) is enabled by default — required for quantized models.
+###############################################################################
+
 services:
   llama-server:
     image: ${IMAGE_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
@@ -13,8 +20,7 @@ services:
       --host ${SERVER_HOST}
       --port 8080
       --model ${MODEL_MOUNT}
-      -ctk ${CACHE_TYPE_K}
-      -ctv ${CACHE_TYPE_V}
+      -fa on
       -ngl ${GPU_LAYERS}
       ${THREADS:+-t ${THREADS}}
       ${CONTEXT_SIZE:+-c ${CONTEXT_SIZE}}

@@ -1,6 +1,10 @@
 ###############################################################################
 # llama-cpp-vulkan-tq
-# Vulkan build of llama.cpp with TurboQuant KV cache compression.
+# Vulkan build of llama.cpp — optimized for speed.
+#
+# NOTE: Vulkan does NOT support TurboQuant. Use the ROCm backend for
+# TurboQuant KV cache compression. This backend is for fast inference
+# with Flash Attention on AMD/NVIDIA/Intel GPUs.
 #
 # Source: TheTom/llama-cpp-turboquant (feature/turboquant-kv-cache)
 # Base: rocm/dev-ubuntu-24.04 (same as ROCm build for consistent toolchain)
@@ -67,6 +71,7 @@ COPY --from=builder /opt/rocm/lib/ /opt/rocm/lib/
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
 
-# Default: serve with TurboQuant 3-bit KV cache (recommended)
+# Default: serve with Flash Attention enabled (required for Vulkan quantized models)
+# No TurboQuant — Vulkan does not support KV cache compression.
 ENTRYPOINT ["llama-server"]
-CMD ["--host", "0.0.0.0", "--port", "8080", "-ctk", "turbo3", "-ctv", "turbo3"]
+CMD ["--host", "0.0.0.0", "--port", "8080", "-fa", "on"]
