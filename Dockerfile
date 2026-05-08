@@ -6,7 +6,8 @@
 # TurboQuant KV cache compression. This backend is for fast inference
 # with Flash Attention on AMD/NVIDIA/Intel GPUs.
 #
-# Source: TheTom/llama-cpp-turboquant (feature/turboquant-kv-cache)
+# Source: AmesianX/TurboQuant (master) — includes CVE fixes + general improvements
+# Note: TriAttention is ROCm-only and not available in Vulkan build
 # Base: rocm/dev-ubuntu-24.04 (same as ROCm build for consistent toolchain)
 ###############################################################################
 
@@ -34,9 +35,9 @@ RUN wget -qO /tmp/vulkansdk.tar.xz "https://sdk.lunarg.com/sdk/download/1.4.309.
 ENV VULKAN_SDK=/opt/vulkan/1.4.309.0/x86_64
 ENV PATH=/opt/vulkan/1.4.309.0/x86_64/bin:${PATH}
 
-# Clone TurboQuant fork (TheTom — canonical, actively maintained)
-RUN git clone --branch feature/turboquant-kv-cache --depth 1 \
-    https://github.com/TheTom/llama-cpp-turboquant.git /opt/llama.cpp
+# Clone TurboQuant fork (AmesianX — includes CVE fixes + general improvements)
+RUN git clone --branch master --depth 1 \
+    https://github.com/AmesianX/TurboQuant.git /opt/llama.cpp
 WORKDIR /opt/llama.cpp
 
 # Build with Vulkan + TurboQuant + Release optimizations + BLAS
