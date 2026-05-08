@@ -2,6 +2,10 @@
 
 TurboQuant llama.cpp build with Vulkan backend for AMD/Intel GPUs.
 
+## Purpose
+
+The **speed** backend in the lemonade-tq ecosystem. Faster token generation than ROCm for standard workloads. Does NOT support TurboQuant.
+
 ## Build
 
 ```bash
@@ -23,13 +27,12 @@ cmake --build build --target llama-server -j$(nproc)
 
 ## Pitfalls
 
+- Vulkan requires `-fa on` (Flash Attention) for quantized models
 - `-sm tensor` + TurboQuant = CRASH. Use `-sm layer`
 - Always add `-fit off` for split modes
-- Vulkan requires `-fa on` (Flash Attention) for quantized V cache
-- Build inside container - GLIBC mismatch between Fedora host and Ubuntu container
-- Must copy ALL shared libs (libllama*, libggml*, libmtmd*)
+- Build inside container — GLIBC mismatch between Fedora host and Ubuntu container
+- Must copy ALL shared libs (libllama*, libggml*)
 
 ## Dependencies
 
-- TurboQuant fork: `TheTom/llama-cpp-turboquant`
 - Vulkan SDK (glslc, libvulkan.so)
