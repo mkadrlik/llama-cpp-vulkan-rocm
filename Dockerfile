@@ -36,7 +36,7 @@ ENV VULKAN_SDK=/opt/vulkan/1.4.309.0/x86_64
 ENV PATH=/opt/vulkan/1.4.309.0/x86_64/bin:${PATH}
 
 # Clone TurboQuant fork (AmesianX — includes CVE fixes + general improvements)
-RUN git clone --branch master --depth 1 \
+RUN git clone --branch main --depth 1 \
     https://github.com/AmesianX/TurboQuant.git /opt/llama.cpp
 WORKDIR /opt/llama.cpp
 
