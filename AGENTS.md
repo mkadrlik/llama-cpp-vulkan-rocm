@@ -1,10 +1,10 @@
-# llama-cpp-vulkan-tq
+# llama-cpp-vulkan-rocm
 
-TurboQuant llama.cpp build with Vulkan backend for AMD/Intel GPUs.
+llama.cpp build with Vulkan backend for AMD/Intel GPUs (Vulkan + ROCm hybrid).
 
 ## Purpose
 
-The **speed** backend in the lemonade-tq ecosystem. Faster token generation than ROCm for standard workloads. Does NOT support TurboQuant.
+The **speed** backend in the lemonade-tq ecosystem. Faster token generation than ROCm for standard workloads. TriAttention (CUDA-only) is patched out via `#ifdef GGML_CUDA` guards.
 
 ## Build
 

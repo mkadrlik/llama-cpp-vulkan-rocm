@@ -1,14 +1,15 @@
 ###############################################################################
-# llama-cpp-vulkan-tq — Docker Compose
+# llama-cpp-vulkan-rocm — Docker Compose
 #
-# Vulkan backend for fast inference. Does NOT support TurboQuant.
+# Vulkan + ROCm hybrid backend for fast inference.
+# TriAttention (CUDA-only) is patched out via #ifdef GGML_CUDA guards.
 # Flash Attention (-fa on) is enabled by default — required for quantized models.
 ###############################################################################
 
 services:
   llama-server:
     image: ${IMAGE_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-    container_name: llama-cpp-vulkan-tq
+    container_name: llama-cpp-vulkan-rocm
     restart: unless-stopped
     devices:
       - /dev/dri:/dev/dri
