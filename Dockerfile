@@ -7,14 +7,12 @@
 # with Flash Attention on AMD/NVIDIA/Intel GPUs.
 #
 # Source: AmesianX/TurboQuant (master) — includes CVE fixes + general improvements
-# Note: TriAttention is ROCm-only and not available in Vulkan build
-# Base: rocm/dev-ubuntu-24.04 (same as ROCm build for consistent toolchain)
+# Note: TriAttention is CUDA-only, patched out for Vulkan builds
+# Base: rocm/dev-ubuntu-24.04 (for Vulkan SDK + toolchain)
 ###############################################################################
 
-# Use -complete variant which includes full dev toolchain (~6.9 GB)
 FROM rocm/dev-ubuntu-24.04:7.2.3-complete AS builder
 
-# Build dependencies
 RUN apt-get update && apt-get install -y \
     cmake \
     git \
@@ -40,7 +38,15 @@ RUN git clone --branch main --depth 1 \
     https://github.com/AmesianX/TurboQuant.git /opt/llama.cpp
 WORKDIR /opt/llama.cpp
 
-# Build with Vulkan + TurboQuant + Release optimizations + BLAS
+###############################################################################
+# Patch: TriAttention is CUDA-only. Guard with #ifdef GGML_CUDA so Vulkan
+# (and CPU-only) builds don't break on missing CUDA symbols.
+###############################################################################
+COPY apply_cuda_patches.py /tmp/
+ENV SRC=/opt/llama.cpp/src
+RUN python3 /tmp/apply_cuda_patches.py && rm /tmp/apply_cuda_patches.py
+
+# Build with Vulkan + Release optimizations + BLAS
 RUN cmake -B build \
     -DGGML_VULKAN=ON \
     -DGGML_BLAS=ON \
@@ -51,14 +57,16 @@ RUN cmake -B build \
 ###############################################################################
 # Runtime image
 ###############################################################################
-FROM rocm/dev-ubuntu-24.04:7.2.3
+FROM ubuntu:24.04
 
-# Install runtime dependencies
+# Install runtime dependencies — Vulkan runtime + OpenBLAS for BLAS backend
 RUN apt-get update && apt-get install -y \
-    libvulkan1 libgomp1 libopenblas0-pthread \
+    libvulkan1 \
+    libgomp1 \
+    libopenblas0-pthread \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy built binaries + ALL shared libs (llama-server dynamically links to all of them)
+# Copy built binaries + ALL shared libs
 COPY --from=builder /opt/llama.cpp/build/bin/llama-server /usr/local/bin/
 COPY --from=builder /opt/llama.cpp/build/bin/llama-quantize /usr/local/bin/
 COPY --from=builder /opt/llama.cpp/build/bin/llama-bench /usr/local/bin/
@@ -66,13 +74,10 @@ COPY --from=builder /opt/llama.cpp/build/bin/llama-perplexity /usr/local/bin/
 COPY --from=builder /opt/llama.cpp/build/bin/libggml*.so* /usr/local/lib/
 COPY --from=builder /opt/llama.cpp/build/bin/libllama*.so* /usr/local/lib/
 COPY --from=builder /opt/llama.cpp/build/bin/libmtmd*.so* /usr/local/lib/
-
-# Copy ROCm runtime libraries (hipblas, rocblas, etc.)
-COPY --from=builder /opt/rocm/lib/ /opt/rocm/lib/
+COPY --from=builder /opt/llama.cpp/build/libllama-common.so* /usr/local/lib/
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
 
 # Default: serve with Flash Attention enabled (required for Vulkan quantized models)
-# No TurboQuant — Vulkan does not support KV cache compression.
 ENTRYPOINT ["llama-server"]
 CMD ["--host", "0.0.0.0", "--port", "8080", "-fa", "on"]
