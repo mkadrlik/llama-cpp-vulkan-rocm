@@ -1,7 +1,23 @@
+# Environment-specific files
 .env
+!.env.example
+
+# Models
 *.gguf
+
+# Python
 __pycache__/
+*.pyc
 
 # Gitea Actions (not mirrored to GitHub)
 .gitea/
 !.gitea/workflows/
+
+# Build artifacts
+*.tar
+*.zip
+*.o
+
+# OS files
+.DS_Store
+Thumbs.db
