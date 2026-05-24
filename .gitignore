@@ -21,3 +21,6 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Upstream tracking (local only, auto-generated)
+.upstream-hash
