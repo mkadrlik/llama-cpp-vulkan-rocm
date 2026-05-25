@@ -143,9 +143,12 @@ def main():
     # Four regions: tria counter block, tria_set method, tria_attach, extern block+load/free
     apply_guards(f'{src}/llama-context.cpp', [
         # (1) if (tria_stats && tria_budget > 0) block
+        # Sentinel: "return 0;" stops the guard BEFORE the function-closing return.
+        # Previous sentinel ["//", "// output"] matched past the function close brace,
+        # leaving an orphaned #endif in file scope (compile error).
         (
             "if (tria_stats && tria_budget > 0)",
-            ["//", "// output"],
+            ["return 0;"],
             0,
         ),
         # (2) void llama_context::tria_set
